@@ -1,0 +1,64 @@
+name: mingw
+
+on:
+  push:
+    tags: [ mingw ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        msystem: [ MINGW64, MINGW32 ]
+    name: ${{ matrix.msystem }}
+    runs-on: windows-latest
+    env:
+      MSYSTEM: ${{ matrix.msystem }}
+    defaults:
+      run:
+        shell: C:\shells\msys2bash.cmd {0}
+    steps:
+    - name: Disable autocrlf
+      shell: bash
+      run: git config --global core.autocrlf false
+    - uses: actions/checkout@v4
+    - name: Install dependency
+      run: |
+        pacman -Sy --noconfirm \
+          ${MINGW_PACKAGE_PREFIX}-make \
+          ${MINGW_PACKAGE_PREFIX}-autotools \
+          ${MINGW_PACKAGE_PREFIX}-nasm \
+          ${MINGW_PACKAGE_PREFIX}-ninja \
+          ${MINGW_PACKAGE_PREFIX}-meson \
+          ${MINGW_PACKAGE_PREFIX}-lua51 \
+          ${MINGW_PACKAGE_PREFIX}-cc patch p7zip
+        rm ${MINGW_PREFIX}/lib/liblua5.1.dll.a
+
+    - name: Build packages
+      run: |
+        for p in mbedtls freetype harfbuzz libass dav1d ffmpeg spirv-cross shaderc mpv; do
+          echo building $p
+          pushd mingw/$p
+          makepkg-mingw -sciCf --noconfirm
+          popd
+        done
+
+        cd ${MINGW_PREFIX}
+        7z a -mx=9 ${GITHUB_WORKSPACE}/mpv-dev-${MSYSTEM_CARCH}.7z include/mpv \
+          ${MINGW_PREFIX}/bin/libmpv-2.dll \
+          ${MINGW_PREFIX}/lib/libmpv.dll.a \
+          ${MINGW_PREFIX}/share/doc/mpv/mpv.def
+    - name: Upload packages
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: mingw
+        prerelease: true
+        files: |
+          mingw/curl/*.pkg.tar.zst
+          mingw/mpv/*.pkg.tar.zst
+          mpv-*.7z
+        body: |
+          ![download](https://img.shields.io/github/downloads/${{ github.repository }}/mingw/total?label=Downloads)
