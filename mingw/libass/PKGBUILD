@@ -1,0 +1,48 @@
+# Maintainer: Alexey Pavlov <alexpux@gmail.com>
+
+_realname=libass
+pkgbase=mingw-w64-${_realname}
+pkgname="${MINGW_PACKAGE_PREFIX}-${_realname}"
+pkgver=0.17.2
+pkgrel=1
+pkgdesc="A portable library for SSA/ASS subtitles rendering (mingw-w64)"
+arch=('any')
+mingw_arch=('mingw32' 'mingw64' 'clangarm64')
+url='https://github.com/libass/libass'
+license=('spdx:ISC')
+makedepends=(
+  "${MINGW_PACKAGE_PREFIX}-autotools"
+  "${MINGW_PACKAGE_PREFIX}-cc"
+)
+depends=(
+  "${MINGW_PACKAGE_PREFIX}-fribidi"
+  "${MINGW_PACKAGE_PREFIX}-freetype"
+  "${MINGW_PACKAGE_PREFIX}-libunibreak"
+  "${MINGW_PACKAGE_PREFIX}-harfbuzz"
+)
+options=('staticlibs' '!strip')
+source=(https://github.com/libass/${_realname}/releases/download/${pkgver}/${_realname}-${pkgver}.tar.xz)
+sha256sums=('e8261b51d66ba933fe99248c6fdd8767ed96c5a7e5363c83992c735a2c2fbf74')
+
+prepare() {
+  cd "${srcdir}/${_realname}-${pkgver}"
+  # autoreconf to get updated libtool for clang
+  autoreconf -fiv
+}
+
+build() {
+  mkdir -p "${srcdir}/build-${MSYSTEM}" && cd "${srcdir}/build-${MSYSTEM}"
+
+  CPPFLAGS+=" -DFRIBIDI_LIB_STATIC" \
+  ${srcdir}/${_realname}-${pkgver}/configure \
+    --prefix=${MINGW_PREFIX} \
+    --disable-shared \
+    --enable-static \
+    --disable-fontconfig
+  make
+}
+
+package() {
+  cd "${srcdir}/build-${MSYSTEM}"
+  make DESTDIR="${pkgdir}" install
+}
