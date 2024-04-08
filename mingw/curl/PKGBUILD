@@ -42,6 +42,7 @@ build() {
     --disable-pthreads \
     --disable-progress-meter \
     --without-random \
+    --disable-docs \
     --enable-static \
     --enable-shared \
     --disable-debug \
