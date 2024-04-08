@@ -179,6 +179,9 @@ jobs:
           --disable-autodetect --disable-encoders --enable-pic --disable-asm \
           --disable-programs --disable-doc --disable-debug --disable-avdevice \
           --disable-filters --enable-filter=hflip,vflip,transpose --disable-muxers \
+          --disable-decoders --enable-decoder=flac,aac,opus,mp3,h264,hevc,libdav1d,hdr,srt,eac3 \
+          --disable-protocols --enable-protocol=file,http,tcp,udp,hls,https,tls,httpproxy \
+          --disable-demuxers --enable-demuxer=mov,flv,hls \
           --disable-libjack --disable-indev=jack --disable-postproc \
           --enable-libdav1d --enable-libass --enable-libfreetype --enable-zlib --enable-bzlib \
           --enable-network --enable-securetransport --enable-videotoolbox --enable-audiotoolbox

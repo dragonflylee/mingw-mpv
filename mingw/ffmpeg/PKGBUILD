@@ -51,12 +51,20 @@ build() {
     --disable-doc \
     --disable-avdevice \
     --disable-encoders \
+    --disable-decoders \
     --disable-muxers \
+    --disable-demuxers \
+    --disable-filters \
+    --disable-protocols \
     --enable-swscale \
     --enable-swresample \
     --enable-network  \
     --enable-dxva2 \
     --enable-d3d11va \
+    --enable-decoder=flac,aac,opus,mp3,h264,hevc,libdav1d,hdr,srt,eac3 \
+    --enable-protocol=file,http,tcp,udp,hls,https,tls,httpproxy \
+    --enable-demuxer=mov,flv,hls \
+    --enable-filter=hflip,vflip,transpose \
     --enable-zlib \
     --enable-bzlib \
     --enable-libass \
