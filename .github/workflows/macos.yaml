@@ -21,10 +21,7 @@ jobs:
         - tag: IntelChip
           arch: x86_64
           target: "10.15"
-        - tag: IntelChip_Old
-          arch: x86_64
-          target: "10.11"
-        tag: [ IntelChip_Old, IntelChip, AppleSilicon ]
+        tag: [ IntelChip, AppleSilicon ]
     runs-on: macos-12
     env:
       CFLAGS: -arch ${{ matrix.arch }} -mmacosx-version-min=${{ matrix.target }}
@@ -44,13 +41,6 @@ jobs:
         brew unlink python && brew link --overwrite python
     - name: Install dependency
       run: brew install python
-    - name: Build bootstrap
-      if: ${{ matrix.tag == 'IntelChip_Old' }}
-      run: |
-        curl -sSL https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.gz | tar zxf - -C ${{ runner.temp }}
-        cd ${{ runner.temp }}/boost_1_85_0
-        ./bootstrap.sh --with-libraries=filesystem --without-icu -prefix=$CMAKE_PREFIX_PATH
-        ./b2 install target-os=darwin variant=release
     - name: Build bzip2
       run: |
         curl -sSL https://gitlab.com/bzip2/bzip2/-/archive/master/bzip2-master.tar.gz | tar zxf - -C ${{ runner.temp }}
@@ -186,12 +176,25 @@ jobs:
           --enable-libdav1d --enable-libass --enable-libfreetype --enable-zlib --enable-bzlib \
           --enable-network --enable-securetransport --enable-videotoolbox --enable-audiotoolbox
         make install
+    - name: Build libplacebo
+      run: |
+        git clone https://code.videolan.org/videolan/libplacebo.git -b v7.349.0 --depth 1 --recurse-submodules ${{ runner.temp }}/libplacebo
+        cd ${{ runner.temp }}/libplacebo
+        meson setup build ${{ matrix.meson }} \
+          --prefix=$CMAKE_PREFIX_PATH \
+          --buildtype=release \
+          --default-library=shared \
+          -Ddemos=false \
+          -Dtests=false \
+          -Dopengl=enabled \
+          -Dlcms=disabled \
+          -Dvulkan=disabled
+        meson compile -C build
+        meson install -C build
     - name: Build mpv
       run: |
-        curl -sSL https://github.com/mpv-player/mpv/archive/v0.36.0.tar.gz | tar zxf - -C ${{ runner.temp }}
-        cd ${{ runner.temp }}/mpv-0.36.0
-        patch -Np1 -i ${{ github.workspace }}/macos/mpv.patch
-        patch -Np1 -i ${{ github.workspace }}/mingw/mpv/0002-lavfi-channel-layout.patch
+        curl -sSL https://github.com/mpv-player/mpv/archive/v0.39.0.tar.gz | tar zxf - -C ${{ runner.temp }}
+        cd ${{ runner.temp }}/mpv-0.39.0
         meson setup build ${{ matrix.meson }} \
           --prefix=$CMAKE_PREFIX_PATH \
           --buildtype=release \
@@ -199,7 +202,6 @@ jobs:
           -Dlibmpv=true \
           -Dcplayer=false \
           -Dtests=false \
-          -Dswift-build=disabled \
           -Dmacos-cocoa-cb=disabled \
           -Dmacos-media-player=disabled \
           -Dmacos-touchbar=disabled \
@@ -214,7 +216,7 @@ jobs:
     - name: Build packages
       run: |
         cd $CMAKE_PREFIX_PATH
-        tar zcf ${{ github.workspace }}/dylib-ffmpeg7-mpv36-${{ matrix.tag }}.tar.gz \
+        tar zcf ${{ github.workspace }}/dylib-ffmpeg7-mpv39-${{ matrix.tag }}.tar.gz \
           include lib/pkgconfig lib/cmake lib/*.dylib
     - name: Upload packages
       uses: softprops/action-gh-release@v2
