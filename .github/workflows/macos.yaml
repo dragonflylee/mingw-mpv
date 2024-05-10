@@ -172,8 +172,8 @@ jobs:
         cmake --install build --strip
     - name: Build ffmpeg
       run: |
-        curl -sSL https://ffmpeg.org/releases/ffmpeg-6.1.2.tar.xz | tar Jxf - -C ${{ runner.temp }}
-        cd ${{ runner.temp }}/ffmpeg-6.1.2
+        curl -sSL https://ffmpeg.org/releases/ffmpeg-7.1.tar.xz | tar Jxf - -C ${{ runner.temp }}
+        cd ${{ runner.temp }}/ffmpeg-7.1
         ./configure --enable-shared --disable-static --enable-pthreads --prefix=$CMAKE_PREFIX_PATH \
           --cc=clang --enable-cross-compile --target-os=darwin --arch=${{ matrix.arch }} \
           --disable-autodetect --disable-encoders --enable-pic --disable-asm \
@@ -191,6 +191,7 @@ jobs:
         curl -sSL https://github.com/mpv-player/mpv/archive/v0.36.0.tar.gz | tar zxf - -C ${{ runner.temp }}
         cd ${{ runner.temp }}/mpv-0.36.0
         patch -Np1 -i ${{ github.workspace }}/macos/mpv.patch
+        patch -Np1 -i ${{ github.workspace }}/mingw/mpv/0002-lavfi-channel-layout.patch
         meson setup build ${{ matrix.meson }} \
           --prefix=$CMAKE_PREFIX_PATH \
           --buildtype=release \
@@ -213,7 +214,7 @@ jobs:
     - name: Build packages
       run: |
         cd $CMAKE_PREFIX_PATH
-        tar zcf ${{ github.workspace }}/dylib-ffmpeg6-mpv36-${{ matrix.tag }}.tar.gz \
+        tar zcf ${{ github.workspace }}/dylib-ffmpeg7-mpv36-${{ matrix.tag }}.tar.gz \
           include lib/pkgconfig lib/cmake lib/*.dylib
     - name: Upload packages
       uses: softprops/action-gh-release@v2
