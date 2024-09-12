@@ -2,7 +2,9 @@ name: macos-dylib
 
 on:
   push:
-    tags: [ macos-dylib ]
+    branches: [ nightly ]
+  schedule:
+  - cron: "0 10 * * 1"
 
 permissions:
   contents: write
@@ -193,8 +195,8 @@ jobs:
         meson install -C build
     - name: Build mpv
       run: |
-        curl -sSL https://github.com/mpv-player/mpv/archive/v0.39.0.tar.gz | tar zxf - -C ${{ runner.temp }}
-        cd ${{ runner.temp }}/mpv-0.39.0
+        curl -sSL https://github.com/mpv-player/mpv/archive/master.tar.gz | tar zxf - -C ${{ runner.temp }}
+        cd ${{ runner.temp }}/mpv-master
         meson setup build ${{ matrix.meson }} \
           --prefix=$CMAKE_PREFIX_PATH \
           --buildtype=release \
@@ -216,7 +218,7 @@ jobs:
     - name: Build packages
       run: |
         cd $CMAKE_PREFIX_PATH
-        tar zcf ${{ github.workspace }}/dylib-ffmpeg7-mpv39-${{ matrix.tag }}.tar.gz \
+        tar zcf ${{ github.workspace }}/dylib-ffmpeg7-mpv-nightly-${{ matrix.tag }}.tar.gz \
           include lib/pkgconfig lib/cmake lib/*.dylib
     - name: Upload packages
       uses: softprops/action-gh-release@v2
